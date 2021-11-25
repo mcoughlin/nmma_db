@@ -56,6 +56,7 @@ install_requires = [
     "arrow",
     "bcrypt",
     "bilby_pipe",
+    "jwt",
     "odmantic",
     "psycopg2-binary",
     "pymongo",
@@ -67,13 +68,13 @@ install_requires = [
 
 # For documenation
 extras_require = {
-    'doc': [
-        'matplotlib',
-        'ipython',
-        'sphinx',
-        'numpydoc',
-        'sphinx_rtd_theme',
-        'sphinxcontrib_programoutput',
+    "doc": [
+        "matplotlib",
+        "ipython",
+        "sphinx",
+        "numpydoc",
+        "sphinx_rtd_theme",
+        "sphinxcontrib_programoutput",
     ],
 }
 
