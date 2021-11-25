@@ -2,7 +2,7 @@ name: CI to Docker Hub
 
 on:
   push:
-    branches: [ main ]
+    branches: [ unit-test ]
 
 jobs:
 
@@ -28,9 +28,9 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: ./
-          file: ./Dockerfile
+          file: ./api.Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/template:latest
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/nmma_db:latest
 
       - name: Image digest
         run: echo ${{ steps.docker_build.outputs.digest }}
