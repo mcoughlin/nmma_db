@@ -2,7 +2,7 @@ name: CI to Docker Hub
 
 on:
   push:
-    branches: [ unit-test ]
+    branches: [ unit-tests ]
 
 jobs:
 
