@@ -3,6 +3,7 @@ import bcrypt
 import os
 import pandas as pd
 import numpy as np
+import warnings
 from astropy.time import Time
 
 import matplotlib
@@ -10,13 +11,16 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import cm
 import yaml
 
-from nmma.em.model import (
-    SVDLightCurveModel,
-    GRBLightCurveModel,
-    KilonovaGRBLightCurveModel,
-    SupernovaGRBLightCurveModel,
-)
-from nmma.em.utils import loadEvent, getFilteredMag
+try:
+    from nmma.em.model import (
+        SVDLightCurveModel,
+        GRBLightCurveModel,
+        KilonovaGRBLightCurveModel,
+        SupernovaGRBLightCurveModel,
+    )
+    from nmma.em.utils import loadEvent, getFilteredMag
+except ImportError:
+    warnings.warn("Package nmma not avaiable, some features may not work")
 
 matplotlib.rcParams.update(
     {"font.size": 16, "text.usetex": True, "font.family": "Times New Roman"}
