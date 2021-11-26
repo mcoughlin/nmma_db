@@ -179,7 +179,11 @@ def fit_lc(
             bestfit_params,
             bestfit_lightcurve_magKN_KNGRB,
         ) = get_bestfit_lightcurve(
-            model_name, posterior_file, svdmodel_directory, plot_sample_times
+            model_name,
+            posterior_file,
+            svdmodel_directory,
+            plot_sample_times,
+            gptype=gptype,
         )
 
         # if fit_trigger_time:

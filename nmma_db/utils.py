@@ -15,8 +15,9 @@ try:
     from nmma.em.model import (
         SVDLightCurveModel,
         GRBLightCurveModel,
-        KilonovaGRBLightCurveModel,
-        SupernovaGRBLightCurveModel,
+        SupernovaLightCurveModel,
+        ShockCoolingLightCurveModel,
+        SimpleKilonovaLightCurveModel,
     )
     from nmma.em.utils import loadEvent, getFilteredMag
 except ImportError:
@@ -42,11 +43,11 @@ def get_bestfit_lightcurve(
     posterior_file,
     svd_path,
     sample_times,
-    joint_light_curve=False,
     mag_ncoeff=10,
     lbol_ncoeff=10,
     grb_resolution=10,
     jet_type=0,
+    gptype="sklearn",
 ):
     """Generates the bestfit lightcurve model
     par model The name of the model used in fitting.
@@ -62,57 +63,37 @@ def get_bestfit_lightcurve(
     #################
     # Setup the model
     #################
-    kilonova_kwargs = dict(
-        model=model,
-        svd_path=svd_path,
-        mag_ncoeff=mag_ncoeff,
-        lbol_ncoeff=lbol_ncoeff,
-        parameter_conversion=None,
-    )
-    if joint_light_curve:
 
-        assert model != "TrPi2018", "TrPi2018 is not a kilonova / supernova model"
+    if model == "TrPi2018":
+        bestfit_model = GRBLightCurveModel(
+            sample_times=sample_times, resolution=grb_resolution, jetType=jet_type
+        )
 
-        if model != "nugent-hyper":
+    elif model == "nugent-hyper":
+        bestfit_model = SupernovaLightCurveModel(
+            sample_times=sample_times, model="nugent-hyper"
+        )
 
-            kilonova_kwargs = dict(
-                model=model,
-                svd_path=svd_path,
-                mag_ncoeff=mag_ncoeff,
-                lbol_ncoeff=lbol_ncoeff,
-                parameter_conversion=None,
-            )
+    elif model == "salt2":
+        bestfit_model = SupernovaLightCurveModel(
+            sample_times=sample_times, model="salt2"
+        )
 
-            bestfit_model = KilonovaGRBLightCurveModel(
-                sample_times=sample_times,
-                kilonova_kwargs=kilonova_kwargs,
-                GRB_resolution=grb_resolution,
-                jetType=jet_type,
-            )
+    elif model == "Piro2021":
+        bestfit_model = ShockCoolingLightCurveModel(sample_times=sample_times)
 
-        else:
-
-            bestfit_model = SupernovaGRBLightCurveModel(
-                sample_times=sample_times,
-                GRB_resolution=grb_resolution,
-                jetType=jet_type,
-            )
-
+    elif model == "Me2017":
+        bestfit_model = SimpleKilonovaLightCurveModel(sample_times=sample_times)
     else:
-        if model == "TrPi2018":
-            bestfit_model = GRBLightCurveModel(
-                sample_times=sample_times, resolution=grb_resolution, jetType=jet_type
-            )
-
-        else:
-            light_curve_kwargs = dict(
-                model=model,
-                sample_times=sample_times,
-                svd_path=svd_path,
-                mag_ncoeff=mag_ncoeff,
-                lbol_ncoeff=lbol_ncoeff,
-            )
-            bestfit_model = SVDLightCurveModel(**light_curve_kwargs)
+        lc_kwargs = dict(
+            model=model,
+            sample_times=sample_times,
+            svd_path=svd_path,
+            mag_ncoeff=mag_ncoeff,
+            lbol_ncoeff=lbol_ncoeff,
+            gptype=gptype,
+        )
+        bestfit_model = SVDLightCurveModel(**lc_kwargs)
 
     ##########################
     # Fetch bestfit parameters
