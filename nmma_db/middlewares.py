@@ -31,6 +31,7 @@ async def error_middleware(request, handler) -> web.Response:
     :param handler:
     :return:
     """
+
     try:
         response = await handler(request)
         if response.status in (200, 400):

@@ -17,6 +17,7 @@ def fit_lc(
     nmma_data,
     prior_directory="./priors",
     svdmodel_directory="./svdmodels",
+    gptype="sklearn",
 ):
 
     # Begin with stuff that may eventually replaced with something else,
@@ -69,36 +70,38 @@ def fit_lc(
     Ebv_max = 0.5724
     # grb_resolution = 7
     # jet_type = 0
-    joint_light_curve = False
     # sampler = "pymultinest"
     # seed = 42
 
     # Set the prior file. Depends on model and if trigger time is a parameter.
     if prior is None:
-        if joint_light_curve:
-            if model_name != "nugent-hyper":
-                # KN+GRB
-                print("Not yet configured for KN+GRB")
-                quit()
+        if model_name == "nugent-hyper":
+            # supernova
+            if fit_trigger_time:
+                prior = f"{prior_directory}/ZTF_sn_t0.prior"
             else:
-                # supernova
-                if fit_trigger_time:
-                    prior = f"{prior_directory}/ZTF_sn_t0.prior"
-                else:
-                    prior = f"{prior_directory}/ZTF_sn.prior"
+                prior = f"{prior_directory}/ZTF_sn.prior"
+        elif model_name == "TrPi2018":
+            # GRB
+            if fit_trigger_time:
+                prior = f"{prior_directory}/ZTF_grb_t0.prior"
+            else:
+                prior = f"{prior_directory}/ZTF_grb.prior"
+        elif model_name == "Piro2021":
+            # Shock cooling
+            if fit_trigger_time:
+                prior = f"{prior_directory}/ZTF_sc_t0.prior"
+            else:
+                prior = f"{prior_directory}/ZTF_sc.prior"
+        elif model_name == "Bu2019lm":
+            # KN
+            if fit_trigger_time:
+                prior = f"{prior_directory}/ZTF_kn_t0.prior"
+            else:
+                prior = f"{prior_directory}/ZTF_kn.prior"
         else:
-            if model_name == "TrPi2018":
-                # GRB
-                if fit_trigger_time:
-                    prior = f"{prior_directory}/ZTF_grb_t0.prior"
-                else:
-                    prior = f"{prior_directory}/ZTF_grb.prior"
-            else:
-                # KN
-                if fit_trigger_time:
-                    prior = f"{prior_directory}/ZTF_kn_t0.prior"
-                else:
-                    prior = f"{prior_directory}/ZTF_kn.prior"
+            print("nmma_fit.py does not know of the prior file for model ", model_name)
+            exit(1)
 
     plotdir = tempfile.mkdtemp()
 
@@ -141,7 +144,9 @@ def fit_lc(
             + " --nlive "
             + str(nlive)
             + " --Ebv-max "
-            + str(Ebv_max),
+            + str(Ebv_max)
+            + " --gptype "
+            + gptype,
             shell=True,
             capture_output=True,
         )
