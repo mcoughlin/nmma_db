@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.6, 3.7, 3.8]
+        python-version: [3.7, 3.8]
 
     steps:
     - uses: actions/checkout@v2
@@ -35,7 +35,7 @@ jobs:
     - name: Install dependencies
       run: |
         # sudo apt-get install gfortran swig libhdf5-serial-dev libmpich-dev
-        python -m pip install coverage cpp-coveralls flake8 pytest pytest-cov
+        python -m pip install pytest pytest-cov flake8 pytest-aiohttp sqlparse freezegun bs4
         python -m pip install .[doc]
     - name: Lint with flake8
       run: |
@@ -45,6 +45,7 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --exclude docs,versioneer.py,nmma_db/_version.py,nmma_db/tests,nmma_db/*/__init__.py
     - name: Test with pytest
       run: |
+        cp config.defaults.yaml config.yaml
         pytest --cov=./nmma_db --cov-report=xml
         cd docs && make html; cd ../
 

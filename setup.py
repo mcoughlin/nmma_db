@@ -64,6 +64,7 @@ install_requires = [
     "simplejson",
     "sqlalchemy",
     "uvloop",
+    "jwt",
 ]
 
 # For documenation
