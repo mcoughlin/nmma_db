@@ -59,6 +59,7 @@ jobs:
         # sudo apt-get install gfortran swig libhdf5-serial-dev libmpich-dev
         python -m pip install pytest pytest-cov flake8 pytest-aiohttp sqlparse freezegun bs4
         python -m pip install .[doc]
+        cd nmma && python -m pip install . && cd ..
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
