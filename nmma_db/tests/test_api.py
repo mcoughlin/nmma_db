@@ -1,6 +1,7 @@
 import string
 import random
 from typing import List
+import jwt
 
 from nmma_db.api import app_factory
 from nmma_db.utils import load_config
@@ -57,7 +58,6 @@ class TestAPIs(object):
 
         # create user
         resp = await client.post("/api/user", json=data, timeout=600)
-        print(resp.text)
         assert resp.status == 200
         result = await resp.json()
         assert result["status"] == "success"
@@ -68,7 +68,7 @@ class TestAPIs(object):
         result = await resp.json()
         assert result["status"] == "success"
 
-        credentials = r.json()['data']
+        credentials = result['data']
         jwt_token = credentials["token"].encode()
         payload = jwt.decode(jwt_token,
                             cfg["server"]["JWT_SECRET_KEY"],
