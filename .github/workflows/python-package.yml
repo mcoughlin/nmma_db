@@ -65,11 +65,30 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --exclude docs
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --exclude docs,versioneer.py,nmma_db/_version.py,nmma_db/tests,nmma_db/*/__init__.py
-    - name: Test with pytest
+    - name: Write SkyPortal configs
       run: |
         cp config.defaults.yaml config.yaml
+        cat << EOF > config.yaml
+          database:
+            database: nmma
+            host: localhost
+            port: 5432
+            user: skyportal
+            password: anything
+        EOF
+    - name: Initialize database
+      run: |
+        echo "localhost:5432:*:nmma:anything" > ~/.pgpass
+        chmod 600 ~/.pgpass
+        createdb -h localhost -U nmma nmma
+        psql -U nmma -h localhost -c "GRANT ALL PRIVILEGES ON DATABASE nmma TO nmma;" nmma
+    - name: Test with pytest
+      run: |
         pytest --cov=./nmma_db --cov-report=xml
         cd docs && make html; cd ../
+      env:
+        POSTGRES_USER: nmma
+        POSTGRES_PASSWORD: nmma
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
