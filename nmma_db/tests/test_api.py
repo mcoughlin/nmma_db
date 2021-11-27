@@ -3,6 +3,9 @@ import random
 from typing import List
 
 from nmma_db.api import app_factory
+from nmma_db.utils import load_config
+
+cfg = load_config(config_file="config.yaml")["nmma"]
 
 
 class TestAPIs(object):
@@ -48,16 +51,43 @@ class TestAPIs(object):
 
         light_curve_fit = await self.make_light_curve_fit()
 
+        data = {'username': cfg["server"]["admin_username"],
+                'password': cfg["server"]["admin_password"],
+                'email': 'test@gmail.com'}
+
+        # create user
+        resp = await client.post("/api/user", json=data, timeout=600)
+        print(resp.text)
+        assert resp.status == 200
+        result = await resp.json()
+        assert result["status"] == "success"
+
+        # get credentials
+        resp = await client.post("/api/auth", json=data, timeout=600)
+        assert resp.status == 200
+        result = await resp.json()
+        assert result["status"] == "success"
+
+        credentials = r.json()['data']
+        jwt_token = credentials["token"].encode()
+        payload = jwt.decode(jwt_token,
+                            cfg["server"]["JWT_SECRET_KEY"],
+                            algorithms=[cfg["server"]["JWT_ALGORITHM"]])
+
+        headers = {"Authorization": jwt_token}
+
         # post
-        resp = await client.post("/api/fit", json=light_curve_fit, timeout=600)
+        resp = await client.post("/api/fit", headers=headers,
+                                 json=light_curve_fit, timeout=600)
 
         assert resp.status == 200
         result = await resp.json()
         assert result["status"] == "success"
         assert "message" in result
 
-        # post
-        resp = await client.get("/api/fit", json=light_curve_fit, timeout=5)
+        # get
+        resp = await client.get("/api/fit", headers=headers,
+                                json=light_curve_fit, timeout=5)
 
         assert resp.status == 200
         result = await resp.json()
