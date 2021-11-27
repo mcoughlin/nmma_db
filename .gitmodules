@@ -1,0 +1,4 @@
+[submodule "nmma"]
+	path = nmma
+	url = git@bitbucket.org:petertsunhopang/nmma.git
+	branch = master
