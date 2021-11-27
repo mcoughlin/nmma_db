@@ -1,4 +1,4 @@
 [submodule "nmma"]
 	path = nmma
-	url = https://mcoughlin@bitbucket.org/petertsunhopang/nmma.git
+	url = git@bitbucket.org:petertsunhopang/nmma.git
 	branch = master
