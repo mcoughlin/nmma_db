@@ -80,7 +80,6 @@ jobs:
       run: |
         echo "localhost:5432:*:nmma:anything" > ~/.pgpass
         chmod 600 ~/.pgpass
-        createdb -h localhost -U nmma nmma
         psql -U nmma -h localhost -c "GRANT ALL PRIVILEGES ON DATABASE nmma TO nmma;" nmma
     - name: Test with pytest
       run: |
