@@ -15,12 +15,12 @@ jobs:
         python-version: [3.7, 3.8]
 
     steps:
-      - name: Checkout branch being tested
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-          submodules: true
-          clean: false
+    - name: Checkout branch being tested
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+        submodules: true
+        clean: false
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
