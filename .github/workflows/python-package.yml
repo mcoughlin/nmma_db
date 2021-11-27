@@ -67,15 +67,7 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --exclude docs,versioneer.py,nmma_db/_version.py,nmma_db/tests,nmma_db/*/__init__.py
     - name: Write SkyPortal configs
       run: |
-        cp config.defaults.yaml config.yaml
-        cat << EOF > config.yaml
-          database:
-            database: nmma
-            host: localhost
-            port: 5432
-            user: skyportal
-            password: anything
-        EOF
+        cp config.test.yaml config.yaml
     - name: Initialize database
       run: |
         echo "localhost:5432:*:nmma:anything" > ~/.pgpass
@@ -85,9 +77,5 @@ jobs:
       run: |
         pytest --cov=./nmma_db --cov-report=xml
         cd docs && make html; cd ../
-      env:
-        POSTGRES_USER: nmma
-        POSTGRES_PASSWORD: nmma
-
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
