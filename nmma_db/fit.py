@@ -10,7 +10,7 @@ import shutil
 
 from nmma_db.utils import get_bestfit_lightcurve, plot_bestfit_lightcurve
 
-from nmma.utils import loadEvent
+from nmma.em.utils import loadEvent
 
 
 def fit_lc(
