@@ -77,6 +77,7 @@ jobs:
         psql -U nmma -h localhost -c "GRANT ALL PRIVILEGES ON DATABASE nmma TO nmma;" nmma
     - name: Test with pytest
       run: |
+        python nmma_db/models.py --init_db
         pytest --cov=./nmma_db --cov-report=xml
         cd docs && make html; cd ../
     - name: Upload coverage to Codecov
