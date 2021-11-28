@@ -40,7 +40,7 @@ class TestAPIs(object):
             "model_name": model_name,
             "nmma_data": nmma_data,
             "gptype": "tensorflow",
-            "sampler": "dynesty",
+            "sampler": "pymultinest",
         }
 
     async def test_light_curve_fit(self, aiohttp_client):
