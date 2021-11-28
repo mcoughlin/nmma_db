@@ -58,7 +58,7 @@ jobs:
       run: |
         # sudo apt-get install gfortran swig libhdf5-serial-dev libmpich-dev
         sudo apt install -y openmpi-bin libopenmpi-dev
-        python -m pip install pytest pytest-cov flake8 pytest-aiohttp sqlparse freezegun jwt
+        python -m pip install pytest pytest-cov flake8 pytest-aiohttp sqlparse freezegun PyJWT pathlib joblib
         python -m pip install .[doc]
         cd nmma && python -m pip install . && cd ..
     - name: Lint with flake8
@@ -78,8 +78,6 @@ jobs:
     - name: Test with pytest
       run: |
         python nmma_db/models.py --init_db
-        python -c "import jwt; print(jwt.__file__)"
-        ls /opt/hostedtoolcache/Python/3.8.12/x64/lib/python3.8/site-packages/jwt/
         pytest --cov=./nmma_db --cov-report=xml
         cd docs && make html; cd ../
     - name: Upload coverage to Codecov
