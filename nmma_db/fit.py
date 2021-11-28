@@ -10,6 +10,8 @@ import shutil
 
 from nmma_db.utils import get_bestfit_lightcurve, plot_bestfit_lightcurve
 
+from nmma.utils import loadEvent
+
 
 def fit_lc(
     model_name,
@@ -112,6 +114,9 @@ def fit_lc(
             outfile.write(
                 line[0] + " " + line[1] + " " + line[2] + " " + line[3] + "\n"
             )
+
+        data_out = loadEvent(outfile.name)
+        print(data_out)
 
         # NMMA lightcurve fitting
         # triggered with a shell command
