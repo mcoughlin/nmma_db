@@ -233,3 +233,10 @@ if __name__ == "__main__":
         print("Refreshed tables:")
         for m in Base.metadata.tables:
             print(f" - {m}")
+
+        user = User(username=cfg["server"]["admin_username"],
+                    email=cfg["server"]["admin_email"])
+        user.set_password(password=cfg["server"]["admin_password"])
+        DBSession().add(user)
+        DBSession().commit()
+        print("admin created")

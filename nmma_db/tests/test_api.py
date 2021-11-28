@@ -39,6 +39,7 @@ class TestAPIs(object):
             "cand_name": cand_name,
             "model_name": model_name,
             "nmma_data": nmma_data,
+            "gptype": "tensorflow"
         }
 
     async def test_light_curve_fit(self, aiohttp_client):
@@ -50,17 +51,8 @@ class TestAPIs(object):
 
         client = await aiohttp_client(await app_factory())
 
-        light_curve_fit = await self.make_light_curve_fit()
-
         data = {'username': cfg["server"]["admin_username"],
-                'password': cfg["server"]["admin_password"],
-                'email': 'test@gmail.com'}
-
-        # create user
-        resp = await client.post("/api/user", json=data, timeout=600)
-        assert resp.status == 200
-        result = await resp.json()
-        assert result["status"] == "success"
+                'password': cfg["server"]["admin_password"]}
 
         # get credentials
         resp = await client.post("/api/auth", json=data, timeout=600)
@@ -73,8 +65,9 @@ class TestAPIs(object):
         payload = jwt.decode(jwt_token,
                             cfg["server"]["JWT_SECRET_KEY"],
                             algorithms=[cfg["server"]["JWT_ALGORITHM"]])
+        headers = {"Authorization": jwt_token.decode()}
 
-        headers = {"Authorization": jwt_token}
+        light_curve_fit = await self.make_light_curve_fit()
 
         # post
         resp = await client.post("/api/fit", headers=headers,
@@ -93,3 +86,39 @@ class TestAPIs(object):
         result = await resp.json()
         assert result["status"] == "success"
         assert "message" in result
+
+    async def test_create_user(self, aiohttp_client):
+        """Test saving and retrieving a lightcurve fit: /api/user
+
+        :param aiohttp_client:
+        :return:
+        """
+
+        client = await aiohttp_client(await app_factory())
+
+        data = {'username': cfg["server"]["admin_username"],
+                'password': cfg["server"]["admin_password"]}
+
+        # get credentials
+        resp = await client.post("/api/auth", json=data, timeout=600)
+        assert resp.status == 200
+        result = await resp.json()
+        assert result["status"] == "success"
+
+        credentials = result['data']
+        jwt_token = credentials["token"].encode()
+        payload = jwt.decode(jwt_token,
+                            cfg["server"]["JWT_SECRET_KEY"],
+                            algorithms=[cfg["server"]["JWT_ALGORITHM"]])
+        headers = {"Authorization": jwt_token.decode()}
+
+        data = {'username': 'test',
+                'password': 'test',
+                'email': 'test@test.com'}
+
+        # create user
+        resp = await client.post("/api/user", json=data, headers=headers,
+                                 timeout=600)
+        assert resp.status == 200
+        result = await resp.json()
+        assert result["status"] == "success"

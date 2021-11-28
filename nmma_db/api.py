@@ -238,7 +238,7 @@ class AuthHandler(Handler):
 class UserHandler(Handler):
     """Handlers to work with Users"""
 
-    # @auth_required
+    @admin_required
     async def post(self, request: web.Request) -> web.Response:
         """
         Add new user
@@ -325,17 +325,15 @@ class UserHandler(Handler):
 
         try:
             user = User.query.filter_by(username=username).one()
+            return self.error(message="user already exists")
         except NoResultFound:
             user = User(username=username, email=email)
             user.set_password(password=password)
             DBSession().add(user)
             DBSession().commit()
-
             return self.success(message="user created")
-        else:
-            return self.error(message="user already exists")
 
-    # @auth_required
+    @admin_required
     async def delete(self, request: web.Request) -> web.Response:
         """
         Remove user
@@ -410,7 +408,7 @@ class UserHandler(Handler):
 
         return self.success(message=f"removed user {username}")
 
-    # @admin_required
+    @admin_required
     async def put(self, request: web.Request) -> web.Response:
         """
         Edit user data
@@ -514,7 +512,7 @@ class LightcurveFitHandler(Handler):
 
         self.test = test
 
-    # @auth_required
+    @auth_required
     async def post(self, request: web.Request) -> web.Response:
         """Trigger light curve fitting
 
@@ -588,7 +586,7 @@ class LightcurveFitHandler(Handler):
         else:
             return self.error(message="fit already exists")
 
-    # @auth_required
+    @auth_required
     async def get(self, request: web.Request) -> web.Response:
         """Retrieve fit by candidate and model name
 
