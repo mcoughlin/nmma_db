@@ -79,6 +79,7 @@ jobs:
       run: |
         python nmma_db/models.py --init_db
         python -c "import jwt; print(jwt.__file__)"
+        ls /opt/hostedtoolcache/Python/3.8.12/x64/lib/python3.8/site-packages/jwt/
         pytest --cov=./nmma_db --cov-report=xml
         cd docs && make html; cd ../
     - name: Upload coverage to Codecov
