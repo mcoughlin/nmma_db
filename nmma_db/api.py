@@ -228,7 +228,11 @@ class AuthHandler(Handler):
                 payload=payload,
                 key=request.app["JWT"]["JWT_SECRET"],
                 algorithm=request.app["JWT"]["JWT_ALGORITHM"],
-            ).decode()
+            )
+            try:
+                jwt_token = jwt_token.decode()
+            except TypeError:
+                pass
             return self.success(data={"token": jwt_token})
 
         else:
