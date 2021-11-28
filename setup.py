@@ -63,6 +63,7 @@ install_requires = [
     "redis",
     "simplejson",
     "sqlalchemy",
+    "tensorflow",
     "uvloop",
 ]
 
