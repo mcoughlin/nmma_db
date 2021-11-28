@@ -57,6 +57,7 @@ jobs:
     - name: Install dependencies
       run: |
         # sudo apt-get install gfortran swig libhdf5-serial-dev libmpich-dev
+        sudo apt install -y openmpi-bin libopenmpi-dev
         python -m pip install pytest pytest-cov flake8 pytest-aiohttp sqlparse freezegun bs4
         python -m pip install .[doc]
         cd nmma && python -m pip install . && cd ..
