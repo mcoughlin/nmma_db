@@ -53,6 +53,7 @@ install_requires = [
     "aiohttp",
     "aiohttp-middlewares",
     "aiohttp_swagger3",
+    "astropy==4.3.1",
     "arrow",
     "bcrypt",
     "bilby_pipe",
