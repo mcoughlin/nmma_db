@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8]
+        python-version: [3.8, 3.9]
 
     services:
       postgres:
@@ -61,7 +61,8 @@ jobs:
         python -m pip install pytest pytest-cov flake8 pytest-aiohttp sqlparse freezegun PyJWT pathlib joblib
         python -m pip install .[doc]
         cd nmma && python -m pip install . && cd ..
-        git clone https://github.com/JohannesBuchner/MultiNest && cd MultiNest/build && cmake .. && make && pwd && cd ../..
+        git clone https://github.com/JohannesBuchner/MultiNest && cd MultiNest/build && cmake .. && make && cd ../..
+        ls /home/runner/work/nmma_db/nmma_db/MultiNest/lib
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
@@ -82,6 +83,6 @@ jobs:
         pytest --cov=./nmma_db --cov-report=xml
         cd docs && make html; cd ../
       env:
-        LD_LIBRARY_PATH: . # for Linux
+        LD_LIBRARY_PATH: .:/home/runner/work/nmma_db/nmma_db/MultiNest/lib # for Linux
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
