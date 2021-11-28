@@ -39,7 +39,8 @@ class TestAPIs(object):
             "cand_name": cand_name,
             "model_name": model_name,
             "nmma_data": nmma_data,
-            "gptype": "tensorflow"
+            "gptype": "tensorflow",
+            "gptype": "dynesty",
         }
 
     async def test_light_curve_fit(self, aiohttp_client):

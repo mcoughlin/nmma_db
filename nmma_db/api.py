@@ -560,6 +560,7 @@ class LightcurveFitHandler(Handler):
         cand_name = _data.get("cand_name")
         nmma_data = _data.get("nmma_data")
         gptype = _data.get("gptype", "sklearn")
+        sampler = _data.get("sampler", "pymultinest")
 
         try:
             lcfit = LightcurveFit.query.filter_by(
@@ -576,7 +577,8 @@ class LightcurveFitHandler(Handler):
                 bestfit_params,
                 bestfit_lightcurve,
                 log_bayes_factor,
-            ) = fit_lc(model_name, cand_name, nmma_data, gptype=gptype)
+            ) = fit_lc(model_name, cand_name, nmma_data,
+                       gptype=gptype, sampler=sampler)
 
             lcfit.posterior_samples = posterior_samples.to_json()
             lcfit.bestfit_lightcurve = bestfit_lightcurve.to_json()

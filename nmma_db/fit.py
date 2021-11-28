@@ -20,6 +20,7 @@ def fit_lc(
     prior_directory="./priors",
     svdmodel_directory="./svdmodels",
     gptype="sklearn",
+    sampler="pymultinest",
 ):
 
     # Begin with stuff that may eventually replaced with something else,
@@ -117,7 +118,6 @@ def fit_lc(
         outfile.flush()
 
         data_out = loadEvent(outfile.name)
-        print(data_out)
 
         # NMMA lightcurve fitting
         # triggered with a shell command
@@ -152,7 +152,9 @@ def fit_lc(
             + " --Ebv-max "
             + str(Ebv_max)
             + " --gptype "
-            + gptype,
+            + gptype
+            + " --sampler "
+            + sampler,
             shell=True,
             capture_output=True,
         )
