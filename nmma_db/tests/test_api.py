@@ -65,7 +65,7 @@ class TestAPIs(object):
         payload = jwt.decode(jwt_token,
                             cfg["server"]["JWT_SECRET_KEY"],
                             algorithms=[cfg["server"]["JWT_ALGORITHM"]])
-        headers = {"Authorization": jwt_token}
+        headers = {"Authorization": jwt_token.decode()}
 
         light_curve_fit = await self.make_light_curve_fit()
 
