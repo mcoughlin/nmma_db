@@ -231,7 +231,7 @@ class AuthHandler(Handler):
             )
             try:
                 jwt_token = jwt_token.decode()
-            except TypeError:
+            except AttributeError:
                 pass
             return self.success(data={"token": jwt_token})
 
