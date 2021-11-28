@@ -114,6 +114,7 @@ def fit_lc(
             outfile.write(
                 line[0] + " " + line[1] + " " + line[2] + " " + line[3] + "\n"
             )
+        outfile.flush()
 
         data_out = loadEvent(outfile.name)
         print(data_out)
