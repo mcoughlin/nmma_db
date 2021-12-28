@@ -6,6 +6,8 @@ import datetime
 import jwt
 from odmantic import Model
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm import sessionmaker, scoped_session
+from tornado.ioloop import IOLoop
 from typing import List, Mapping, Optional
 import uvloop
 
@@ -20,6 +22,9 @@ from nmma_db.fit import fit_lc
 from nmma_db.utils import load_config
 
 cfg = load_config(config_file="config.yaml")["nmma"]
+
+
+Session = scoped_session(sessionmaker(bind=DBSession.session_factory.kw["bind"]))
 
 
 class Handler:
@@ -562,31 +567,17 @@ class LightcurveFitHandler(Handler):
         gptype = _data.get("gptype", "sklearn")
         sampler = _data.get("sampler", "pymultinest")
 
-        try:
-            lcfit = LightcurveFit.query.filter_by(
-                model_name=model_name, object_id=cand_name
-            ).one()
-        except NoResultFound:
+        lcfit = LightcurveFit.query.filter_by(
+            model_name=model_name, object_id=cand_name
+        ).first()
+        if lcfit is None:
             lcfit = LightcurveFit(object_id=cand_name, model_name=model_name)
             lcfit.status = lcfit.Status.WORKING
+            DBSession().add(lcfit)
             DBSession().commit()
 
         if not lcfit.status == LightcurveFit.Status.READY:
-            (
-                posterior_samples,
-                bestfit_params,
-                bestfit_lightcurve,
-                log_bayes_factor,
-            ) = fit_lc(model_name, cand_name, nmma_data,
-                       gptype=gptype, sampler=sampler)
-
-            lcfit.posterior_samples = posterior_samples.to_json()
-            lcfit.bestfit_lightcurve = bestfit_lightcurve.to_json()
-            lcfit.log_bayes_factor = log_bayes_factor
-            lcfit.status = LightcurveFit.Status.READY
-
-            DBSession().merge(lcfit)
-            DBSession().commit()
+            IOLoop.current().run_in_executor(None, lambda: add_fit(lcfit.id, model_name, cand_name, nmma_data, gptype, sampler))
 
             return self.success(message="submitted")
         else:
@@ -649,7 +640,7 @@ class LightcurveFitHandler(Handler):
 
         lcfit = LightcurveFit.query.filter_by(
             model_name=model_name, object_id=cand_name
-        ).one()
+        ).first()
 
         if lcfit is not None:
             if not lcfit.status == LightcurveFit.Status.READY:
@@ -662,6 +653,38 @@ class LightcurveFitHandler(Handler):
                     data=lcfit.to_dict(),
                 )
         return self.error(message=f"Fit {model_name} of {cand_name} not found")
+
+
+def add_fit(fit_id, model_name, cand_name, nmma_data, gptype, sampler):
+    session = Session()
+    try:
+        (
+            posterior_samples,
+            bestfit_params,
+            bestfit_lightcurve,
+            log_bayes_factor,
+        ) = fit_lc(model_name, cand_name, nmma_data,
+                   gptype=gptype, sampler=sampler)
+
+        lcfit = session.query(LightcurveFit).filter_by(id=fit_id,
+                                                       object_id=cand_name,
+                                                       model_name=model_name).first()
+        lcfit.posterior_samples = posterior_samples.to_json()
+        lcfit.bestfit_lightcurve = bestfit_lightcurve.to_json()
+        lcfit.log_bayes_factor = log_bayes_factor
+        lcfit.status = LightcurveFit.Status.READY
+
+        session.merge(lcfit)
+        session.commit()
+
+        print(f"Generated fit for LightcurveFit {fit_id}")
+
+    except Exception as e:
+        print(
+            f"Unable to generate fit for LightcurveFit {fit_id}: {e}"
+        )
+    finally:
+        Session.remove()
 
 
 async def app_factory():

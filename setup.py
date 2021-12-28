@@ -65,6 +65,7 @@ install_requires = [
     "simplejson",
     "sqlalchemy",
     "tensorflow",
+    "tornado",
     "uvloop",
 ]
 

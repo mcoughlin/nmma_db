@@ -121,8 +121,7 @@ def fit_lc(
 
         # NMMA lightcurve fitting
         # triggered with a shell command
-        command = subprocess.run(
-            "light_curve_analysis"
+        command = subprocess.run("light_curve_analysis"
             + " --model "
             + model_name
             + " --svd-path "
