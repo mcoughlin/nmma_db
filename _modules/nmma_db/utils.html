@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>nmma_db.utils &mdash; nmma_db 0+untagged.1.gf5fbf95 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/plot_directive.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/nmma_db-docs.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> nmma_db
+          </a>
+              <div class="version">
+                0+untagged.1.gf5fbf95
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">nmma_db</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>nmma_db.utils</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for nmma_db.utils</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">base64</span>
+<span class="kn">import</span> <span class="nn">bcrypt</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">astropy.time</span> <span class="kn">import</span> <span class="n">Time</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">import</span> <span class="n">cm</span>
+<span class="kn">import</span> <span class="nn">yaml</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">nmma.em.model</span> <span class="kn">import</span> <span class="p">(</span>
+        <span class="n">SVDLightCurveModel</span><span class="p">,</span>
+        <span class="n">GRBLightCurveModel</span><span class="p">,</span>
+        <span class="n">SupernovaLightCurveModel</span><span class="p">,</span>
+        <span class="n">ShockCoolingLightCurveModel</span><span class="p">,</span>
+        <span class="n">SimpleKilonovaLightCurveModel</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="kn">from</span> <span class="nn">nmma.em.utils</span> <span class="kn">import</span> <span class="n">loadEvent</span><span class="p">,</span> <span class="n">getFilteredMag</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Package nmma not avaiable, some features may not work&quot;</span><span class="p">)</span>
+
+<span class="n">matplotlib</span><span class="o">.</span><span class="n">rcParams</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+    <span class="p">{</span><span class="s2">&quot;font.size&quot;</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span> <span class="s2">&quot;text.usetex&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;font.family&quot;</span><span class="p">:</span> <span class="s2">&quot;Times New Roman&quot;</span><span class="p">}</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="load_config"><a class="viewcode-back" href="../../api/nmma_db.utils.html#nmma_db.utils.load_config">[docs]</a><span class="k">def</span> <span class="nf">load_config</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">,</span> <span class="n">config_file</span><span class="o">=</span><span class="s2">&quot;config.yaml&quot;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load config and secrets</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">config_file</span><span class="p">))</span> <span class="k">as</span> <span class="n">cyaml</span><span class="p">:</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">cyaml</span><span class="p">,</span> <span class="n">Loader</span><span class="o">=</span><span class="n">yaml</span><span class="o">.</span><span class="n">FullLoader</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">config</span></div>
+
+
+<div class="viewcode-block" id="get_bestfit_lightcurve"><a class="viewcode-back" href="../../api/nmma_db.utils.html#nmma_db.utils.get_bestfit_lightcurve">[docs]</a><span class="k">def</span> <span class="nf">get_bestfit_lightcurve</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span>
+    <span class="n">posterior_file</span><span class="p">,</span>
+    <span class="n">svd_path</span><span class="p">,</span>
+    <span class="n">sample_times</span><span class="p">,</span>
+    <span class="n">mag_ncoeff</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="n">lbol_ncoeff</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="n">grb_resolution</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="n">jet_type</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">gptype</span><span class="o">=</span><span class="s2">&quot;sklearn&quot;</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generates the bestfit lightcurve model</span>
+<span class="sd">    par model The name of the model used in fitting.</span>
+<span class="sd">    par posterior_file Location and name of the posterior sample file</span>
+<span class="sd">    par svd_path Path containing model svd files.</span>
+<span class="sd">    par sample_times Grid over which the model is evaluated.</span>
+
+<span class="sd">    returns 2-tuple (dictionary of bestfit parameters, bestfit model magnitudes)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># instead of posterior_file, should it be given the candidate</span>
+    <span class="c1"># name?</span>
+
+    <span class="c1">#################</span>
+    <span class="c1"># Setup the model</span>
+    <span class="c1">#################</span>
+
+    <span class="k">if</span> <span class="n">model</span> <span class="o">==</span> <span class="s2">&quot;TrPi2018&quot;</span><span class="p">:</span>
+        <span class="n">bestfit_model</span> <span class="o">=</span> <span class="n">GRBLightCurveModel</span><span class="p">(</span>
+            <span class="n">sample_times</span><span class="o">=</span><span class="n">sample_times</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="n">grb_resolution</span><span class="p">,</span> <span class="n">jetType</span><span class="o">=</span><span class="n">jet_type</span>
+        <span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">model</span> <span class="o">==</span> <span class="s2">&quot;nugent-hyper&quot;</span><span class="p">:</span>
+        <span class="n">bestfit_model</span> <span class="o">=</span> <span class="n">SupernovaLightCurveModel</span><span class="p">(</span>
+            <span class="n">sample_times</span><span class="o">=</span><span class="n">sample_times</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s2">&quot;nugent-hyper&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">model</span> <span class="o">==</span> <span class="s2">&quot;salt2&quot;</span><span class="p">:</span>
+        <span class="n">bestfit_model</span> <span class="o">=</span> <span class="n">SupernovaLightCurveModel</span><span class="p">(</span>
+            <span class="n">sample_times</span><span class="o">=</span><span class="n">sample_times</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s2">&quot;salt2&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">model</span> <span class="o">==</span> <span class="s2">&quot;Piro2021&quot;</span><span class="p">:</span>
+        <span class="n">bestfit_model</span> <span class="o">=</span> <span class="n">ShockCoolingLightCurveModel</span><span class="p">(</span><span class="n">sample_times</span><span class="o">=</span><span class="n">sample_times</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="n">model</span> <span class="o">==</span> <span class="s2">&quot;Me2017&quot;</span><span class="p">:</span>
+        <span class="n">bestfit_model</span> <span class="o">=</span> <span class="n">SimpleKilonovaLightCurveModel</span><span class="p">(</span><span class="n">sample_times</span><span class="o">=</span><span class="n">sample_times</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">lc_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+            <span class="n">sample_times</span><span class="o">=</span><span class="n">sample_times</span><span class="p">,</span>
+            <span class="n">svd_path</span><span class="o">=</span><span class="n">svd_path</span><span class="p">,</span>
+            <span class="n">mag_ncoeff</span><span class="o">=</span><span class="n">mag_ncoeff</span><span class="p">,</span>
+            <span class="n">lbol_ncoeff</span><span class="o">=</span><span class="n">lbol_ncoeff</span><span class="p">,</span>
+            <span class="n">gptype</span><span class="o">=</span><span class="n">gptype</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">bestfit_model</span> <span class="o">=</span> <span class="n">SVDLightCurveModel</span><span class="p">(</span><span class="o">**</span><span class="n">lc_kwargs</span><span class="p">)</span>
+
+    <span class="c1">##########################</span>
+    <span class="c1"># Fetch bestfit parameters</span>
+    <span class="c1">##########################</span>
+    <span class="n">posterior_samples</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">posterior_file</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
+    <span class="n">bestfit_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">posterior_samples</span><span class="o">.</span><span class="n">log_likelihood</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">())</span>
+    <span class="n">bestfit_params</span> <span class="o">=</span> <span class="n">posterior_samples</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="n">orient</span><span class="o">=</span><span class="s2">&quot;list&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">bestfit_params</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">bestfit_params</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">bestfit_params</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="n">bestfit_idx</span><span class="p">]</span>
+
+    <span class="c1">#########################</span>
+    <span class="c1"># Generate the lightcurve</span>
+    <span class="c1">#########################</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">mag</span> <span class="o">=</span> <span class="n">bestfit_model</span><span class="o">.</span><span class="n">generate_lightcurve</span><span class="p">(</span><span class="n">sample_times</span><span class="p">,</span> <span class="n">bestfit_params</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">filt</span> <span class="ow">in</span> <span class="n">mag</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">mag</span><span class="p">[</span><span class="n">filt</span><span class="p">]</span> <span class="o">+=</span> <span class="mf">5.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">bestfit_params</span><span class="p">[</span><span class="s2">&quot;luminosity_distance&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e6</span> <span class="o">/</span> <span class="mf">10.0</span><span class="p">)</span>
+    <span class="n">mag</span><span class="p">[</span><span class="s2">&quot;bestfit_sample_times&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sample_times</span>
+    <span class="n">bestfit_lightcurve_mag</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">mag</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">posterior_samples</span><span class="p">,</span> <span class="n">bestfit_params</span><span class="p">,</span> <span class="n">bestfit_lightcurve_mag</span></div>
+
+
+<span class="c1"># Parses a file format with a single candidate</span>
+<div class="viewcode-block" id="parse_csv"><a class="viewcode-back" href="../../api/nmma_db.utils.html#nmma_db.utils.parse_csv">[docs]</a><span class="k">def</span> <span class="nf">parse_csv</span><span class="p">(</span><span class="n">infile</span><span class="p">):</span>
+    <span class="c1"># process the numeric data</span>
+    <span class="n">in_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">genfromtxt</span><span class="p">(</span>
+        <span class="n">infile</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot;,&quot;</span><span class="p">,</span> <span class="n">skip_header</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Candidates are given keys that address a 2D array with</span>
+    <span class="c1"># photometry data</span>
+    <span class="n">out_data</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">in_data</span><span class="p">[:]:</span>
+        <span class="c1"># extract time and put in isot format</span>
+        <span class="n">time</span> <span class="o">=</span> <span class="n">Time</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;jd&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">isot</span>
+
+        <span class="nb">filter</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
+
+        <span class="n">magnitude</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+        <span class="n">error</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="mf">99.0</span> <span class="o">==</span> <span class="n">magnitude</span><span class="p">:</span>
+            <span class="n">magnitude</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+
+        <span class="n">out_data</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">time</span><span class="p">),</span> <span class="nb">filter</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">magnitude</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">error</span><span class="p">)])</span>
+
+    <span class="k">return</span> <span class="n">out_data</span></div>
+
+
+<div class="viewcode-block" id="plot_bestfit_lightcurve"><a class="viewcode-back" href="../../api/nmma_db.utils.html#nmma_db.utils.plot_bestfit_lightcurve">[docs]</a><span class="k">def</span> <span class="nf">plot_bestfit_lightcurve</span><span class="p">(</span>
+    <span class="n">data_file</span><span class="p">,</span> <span class="n">bestfit_lightcurve_magKN_KNGRB</span><span class="p">,</span> <span class="n">error_budget</span><span class="p">,</span> <span class="n">trigger_time</span><span class="p">,</span> <span class="n">plotName</span>
+<span class="p">):</span>
+
+    <span class="n">data_out</span> <span class="o">=</span> <span class="n">loadEvent</span><span class="p">(</span><span class="n">data_file</span><span class="p">)</span>
+    <span class="n">filters</span> <span class="o">=</span> <span class="n">data_out</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+
+    <span class="n">color2</span> <span class="o">=</span> <span class="s2">&quot;coral&quot;</span>
+
+    <span class="n">colors</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">Spectral</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">filters</span><span class="p">)))[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">28</span><span class="p">))</span>
+    <span class="n">cnt</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">filt</span><span class="p">,</span> <span class="n">color</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">filters</span><span class="p">,</span> <span class="n">colors</span><span class="p">):</span>
+        <span class="n">cnt</span> <span class="o">=</span> <span class="n">cnt</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">cnt</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">ax1</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">filters</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="n">cnt</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ax2</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">filters</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="n">cnt</span><span class="p">,</span> <span class="n">sharex</span><span class="o">=</span><span class="n">ax1</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="n">ax1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">filt</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">data_out</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">samples</span> <span class="o">=</span> <span class="n">data_out</span><span class="p">[</span><span class="n">filt</span><span class="p">]</span>
+        <span class="n">t</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">sigma_y</span> <span class="o">=</span> <span class="n">samples</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">samples</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">samples</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span>
+        <span class="n">t</span> <span class="o">-=</span> <span class="n">trigger_time</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">y</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">t</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">sigma_y</span> <span class="o">=</span> <span class="n">t</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">sigma_y</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">sigma_y</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span>
+            <span class="n">t</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span>
+            <span class="n">y</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span>
+            <span class="n">sigma_y</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span>
+            <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span>
+            <span class="n">markersize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span>
+            <span class="n">label</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">-band&quot;</span> <span class="o">%</span> <span class="n">filt</span><span class="p">,</span>
+        <span class="p">)</span>  <span class="c1"># or color=color</span>
+
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">sigma_y</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span>
+            <span class="n">t</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">sigma_y</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">&quot;v&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;k&quot;</span><span class="p">,</span> <span class="n">markersize</span><span class="o">=</span><span class="mi">16</span>
+        <span class="p">)</span>  <span class="c1"># or color=color</span>
+
+        <span class="n">magKN_KNGRB_plot</span> <span class="o">=</span> <span class="n">getFilteredMag</span><span class="p">(</span><span class="n">bestfit_lightcurve_magKN_KNGRB</span><span class="p">,</span> <span class="n">filt</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+            <span class="n">bestfit_lightcurve_magKN_KNGRB</span><span class="o">.</span><span class="n">bestfit_sample_times</span><span class="p">,</span>
+            <span class="n">magKN_KNGRB_plot</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="n">color2</span><span class="p">,</span>
+            <span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+            <span class="n">linestyle</span><span class="o">=</span><span class="s2">&quot;--&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span>
+            <span class="n">bestfit_lightcurve_magKN_KNGRB</span><span class="o">.</span><span class="n">bestfit_sample_times</span><span class="p">,</span>
+            <span class="n">magKN_KNGRB_plot</span> <span class="o">+</span> <span class="n">error_budget</span><span class="p">,</span>
+            <span class="n">magKN_KNGRB_plot</span> <span class="o">-</span> <span class="n">error_budget</span><span class="p">,</span>
+            <span class="n">facecolor</span><span class="o">=</span><span class="n">color2</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">filt</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">48</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">labelpad</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">])</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">ylim</span><span class="p">([</span><span class="mf">26.0</span><span class="p">,</span> <span class="mf">14.0</span><span class="p">])</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">cnt</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">ax1</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">([</span><span class="mi">26</span><span class="p">,</span> <span class="mi">22</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">14</span><span class="p">])</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">setp</span><span class="p">(</span><span class="n">ax1</span><span class="o">.</span><span class="n">get_xticklabels</span><span class="p">(),</span> <span class="n">visible</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">cnt</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">filters</span><span class="p">):</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">setp</span><span class="p">(</span><span class="n">ax2</span><span class="o">.</span><span class="n">get_xticklabels</span><span class="p">(),</span> <span class="n">visible</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">xticks</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">36</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">yticks</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">36</span><span class="p">)</span>
+
+    <span class="c1"># ax1.set_zorder(1)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s2">&quot;Time [days]&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">48</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">plotName</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="generate_password_hash"><a class="viewcode-back" href="../../api/nmma_db.utils.html#nmma_db.utils.generate_password_hash">[docs]</a><span class="k">def</span> <span class="nf">generate_password_hash</span><span class="p">(</span><span class="n">password</span><span class="p">,</span> <span class="n">salt_rounds</span><span class="o">=</span><span class="mi">12</span><span class="p">):</span>
+    <span class="n">password_bin</span> <span class="o">=</span> <span class="n">password</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+    <span class="n">hashed</span> <span class="o">=</span> <span class="n">bcrypt</span><span class="o">.</span><span class="n">hashpw</span><span class="p">(</span><span class="n">password_bin</span><span class="p">,</span> <span class="n">bcrypt</span><span class="o">.</span><span class="n">gensalt</span><span class="p">(</span><span class="n">salt_rounds</span><span class="p">))</span>
+    <span class="n">encoded</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">hashed</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">encoded</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="check_password_hash"><a class="viewcode-back" href="../../api/nmma_db.utils.html#nmma_db.utils.check_password_hash">[docs]</a><span class="k">def</span> <span class="nf">check_password_hash</span><span class="p">(</span><span class="n">encoded</span><span class="p">,</span> <span class="n">password</span><span class="p">):</span>
+    <span class="n">password</span> <span class="o">=</span> <span class="n">password</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+    <span class="n">encoded</span> <span class="o">=</span> <span class="n">encoded</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+
+    <span class="n">hashed</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">encoded</span><span class="p">)</span>
+    <span class="n">is_correct</span> <span class="o">=</span> <span class="n">bcrypt</span><span class="o">.</span><span class="n">hashpw</span><span class="p">(</span><span class="n">password</span><span class="p">,</span> <span class="n">hashed</span><span class="p">)</span> <span class="o">==</span> <span class="n">hashed</span>
+    <span class="k">return</span> <span class="n">is_correct</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Michael Coughlin.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
